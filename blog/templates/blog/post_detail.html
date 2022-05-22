@@ -13,8 +13,34 @@
                 </div>
             {% endif %}
         </div>
-        <h2 class="article-title">{{ object.title }}</h2>
-        <p class="article-content">{{ object.content }}</p>
+        <h2 class="article-title">{{ object.task }}</h2>
+        <p class="article-content">{{ object.details }}</p>
+        <p class="article-content">Start date: {{ post.time_from }}</p>
+        <p class="article-content">Due date: {{ post.time_to }}</p>
+        
+        {% now "Y-m-d" as todays_date %}
+        {% if todays_date < post.time_from|date:"Y-m-d" and todays_date < post.time_to|date:"Y-m-d"  %}
+        <p class="article-content">Status: White</p>
+
+        {% elif todays_date == post.time_from|date:"Y-m-d" and todays_date < post.time_to|date:"Y-m-d" %}
+        <p class="article-content">Status: Green</p>
+
+        {% elif todays_date > post.time_from|date:"Y-m-d" and todays_date < post.time_to|date:"Y-m-d" %}
+        <p class="article-content">Status: Green</p>
+
+        {% elif todays_date > post.time_from|date:"Y-m-d" and todays_date == post.time_to|date:"Y-m-d" %}
+        <p class="article-content">Status: Yellow</p>
+
+        {% elif todays_date > post.time_from|date:"Y-m-d" and todays_date > post.time_to|date:"Y-m-d" %}
+        <p class="article-content">Status: Red</p>
+
+        {% endif %}
         </div>
     </article>
 {% endblock content %}
+
+
+
+
+
+

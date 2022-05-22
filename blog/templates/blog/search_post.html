@@ -9,8 +9,27 @@
             <a class="mr-2" href="{% url 'user-posts' post.author.username %}">{{ post.author }}</a>
             <small class="text-muted">{{ post.date_posted|date:"F d, Y" }}</small>
         </div>
-        <h2><a class="article-title" href="{% url 'post-detail' post.id %}">{{ post.title }}</a></h2>
-        <p class="article-content">{{ post.content }}</p>
+        <h2><a class="article-title" href="{% url 'post-detail' post.id %}">{{ post.task }}</a></h2>
+        <p class="article-content">{{ post.details }}</p>
+        <p class="article-content">Start date: {{ post.time_from }}</p>
+        <p class="article-content">Due date: {{ post.time_to }}</p>
+        {% now "Y-m-d" as todays_date %}
+        {% if todays_date < post.time_from|date:"Y-m-d" and todays_date < post.time_to|date:"Y-m-d"  %}
+        <p class="article-content">Status: White</p>
+
+        {% elif todays_date == post.time_from|date:"Y-m-d" and todays_date < post.time_to|date:"Y-m-d" %}
+        <p class="article-content">Status: Green</p>
+
+        {% elif todays_date > post.time_from|date:"Y-m-d" and todays_date < post.time_to|date:"Y-m-d" %}
+        <p class="article-content">Status: Green</p>
+
+        {% elif todays_date > post.time_from|date:"Y-m-d" and todays_date == post.time_to|date:"Y-m-d" %}
+        <p class="article-content">Status: Yellow</p>
+
+        {% elif todays_date > post.time_from|date:"Y-m-d" and todays_date > post.time_to|date:"Y-m-d" %}
+        <p class="article-content">Status: Red</p>
+
+        {% endif %}
         </div>
         </article>
     {% endfor %}

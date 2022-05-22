@@ -1,3 +1,4 @@
+import datetime as dt
 from django.db.models import Q
 from django.shortcuts import redirect, render, get_object_or_404
 from users.models import User
@@ -12,12 +13,6 @@ from django.views.generic import (
     DeleteView,
 )
 
-class PostListView(ListView):
-    model = Post
-    template_name = 'blog/home.html'
-    context_object_name = 'posts' #by defautl the variable is called 'objectlist' in template
-    ordering = ['-date_updated']
-    paginate_by = 10
 
 class UserPostListView(LoginRequiredMixin, ListView):
     model = Post
@@ -34,7 +29,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
-    fields = ['title', 'content']
+    fields = ['task', 'details', 'time_from', 'time_to']
     success_url = '/'
 
     def form_valid(self, form):
@@ -43,7 +38,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
-    fields = ['title', 'content']
+    fields = ['task', 'details', 'time_from', 'time_to']
     success_url = '/'
 
     def test_func(self):
@@ -77,14 +72,47 @@ def search_post(request):
         searched = request.POST['searched']
 
         if searched == '':
-            return redirect('blog-home')
+            return redirect('user-posts', request.user.username)
 
         request.session['searched'] = request.POST
-        result_list = Post.objects.filter(
-                                        Q(title__contains=searched) | 
-                                        Q(content__contains=searched) | 
+        result_list = Post.objects.filter(author=request.user)
+        result_list = result_list.filter(
+                                        Q(task__contains=searched) | 
+                                        Q(details__contains=searched) | 
                                         Q(author__username__contains=searched)
                                         ).distinct().order_by('-date_posted')
+        paginator = Paginator(result_list, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+    else:
+        page_obj = ()
+    return render(request,  'blog/search_post.html', {'page_obj':page_obj, 'searched':searched})
+
+
+def search_date(request):
+
+    if not request.method == 'POST':
+        if 'search-date' in request.session:
+            request.POST = request.session['search-date']
+            request.method = 'POST'
+
+    if request.method == "POST":
+        searched = request.POST['search-date']
+
+        if searched == '':
+            return redirect('user-posts', request.user.username)
+
+        request.session['search-date'] = request.POST
+
+        searched = dt.datetime.strptime(searched, "%Y-%m-%d")
+        searched = searched.date()
+
+        result_list = Post.objects.filter(author=request.user)
+        result_list = result_list.filter(
+                                        time_from__lte=searched,
+                                        time_to__gte=searched
+                                        ).distinct().order_by('-date_posted')
+
         paginator = Paginator(result_list, 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
